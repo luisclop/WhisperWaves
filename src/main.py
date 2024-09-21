@@ -20,7 +20,9 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 @click.command()
 @click.argument("input_dir", type=click.Path(exists=True), default="input")
 def main(input_dir):
-    console.print("Starting transcription process...", style="bold blue")
+    """Transcribes audio files (M4A or MP3) from the input directory."""
+    console.print("Welcome to the Audio Transcription Tool!", style="bold blue")
+    console.print(f"Searching for audio files in '{input_dir}'...", style="bold green")
 
     input_files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f)) and (f.endswith(".mp3") or f.endswith(".m4a"))]
 
