@@ -15,7 +15,7 @@ This script takes an audio file in MP3 format, transcribes the audio using OpenA
 2. Install the required Python packages:
 
     ```sh
-    pip install pydub openai python-dotenv
+    pip install -r requirements.txt
     ```
 
 3. Create a `.env` file in the root directory of the project and add your OpenAI API key:
