@@ -9,6 +9,7 @@ load_dotenv()
 
 # Module imports
 from transcriber.whisper import transcribe_audio
+from utils.m4a_converter import m4a_to_mp3
 
 console = Console()
 
@@ -21,16 +22,28 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 def main(input_dir):
     console.print("Starting transcription process...", style="bold blue")
 
-    input_files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f)) and f.endswith(".mp3")]
+    input_files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f)) and (f.endswith(".mp3") or f.endswith(".m4a"))]
 
     if not input_files:
         console.print("No audio files found in the input directory.", style="bold red")
         return
 
+    # Lista para almacenar los archivos que se van a transcribir
+    files_to_transcribe = []
+
     for input_file in input_files:
         input_path = os.path.join(input_dir, input_file)
-        output_path = os.path.join(OUTPUT_DIR, f"{os.path.splitext(input_file)[0]}.txt")
-        transcribe_audio(input_path, output_path)
+
+        if input_file.endswith(".m4a"):
+            converted_path = m4a_to_mp3(input_path)
+            files_to_transcribe.append(converted_path)
+        else:
+            files_to_transcribe.append(input_path)
+
+    # Transcribir todos los archivos (ya sean mp3 o convertidos)
+    for audio_file in files_to_transcribe:
+        output_path = os.path.join(OUTPUT_DIR, f"{os.path.splitext(os.path.basename(audio_file))[0]}.txt")
+        transcribe_audio(audio_file, output_path)
 
     console.print("Transcription process completed.", style="bold blue")
 
