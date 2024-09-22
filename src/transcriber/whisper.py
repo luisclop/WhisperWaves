@@ -23,15 +23,19 @@ def transcribe_audio(input_path: str, output_path: str) -> None:
         audio_file = AudioSegment.from_file(input_path)
         file_size = os.path.getsize(input_path)
 
+        # Create the file name
+        input_file_name = os.path.basename(input_path)
+        output_file_name = os.path.splitext(input_file_name)[0] + ".txt"
+
         if file_size <= MAX_SIZE:
-            console.print(f"Transcribing {input_path}...", style="bold green")
+            console.print(f"Transcribing {input_file_name}...", style="bold green")
             with open(input_path, "rb") as audio:
                 transcription = client.audio.transcriptions.create(
                     model="whisper-1", file=audio
                 )
             with open(output_path, "w") as file:
                 file.write(transcription.text)
-            console.print(f"Transcription saved to {output_path}", style="bold green")
+            console.print(f"Transcription saved to output/{output_file_name}", style="bold green")
         else:
             console.print(f"The given audio file {input_path} is too large. Splitting it into parts...", style="bold yellow")
 
@@ -63,7 +67,7 @@ def transcribe_audio(input_path: str, output_path: str) -> None:
             full_transcription = "\n".join(transcriptions)
             with open(output_path, "w") as file:
                 file.write(full_transcription)
-            console.print(f"Transcription saved to {output_path}", style="bold green")
+            console.print(f"Transcription saved to output/{output_file_name}", style="bold green")
 
     except Exception as e:
         console.print(f"Error: {e}", style="bold red")

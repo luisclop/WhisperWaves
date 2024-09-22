@@ -29,16 +29,38 @@ else:
 from transcriber.whisper import transcribe_audio
 from utils.m4a_converter import m4a_to_mp3
 
+def get_input_directory():
+    """Get the correct path for the input directory based on the running context."""
+    if is_frozen():
+        # When frozen, the input directory is relative to the executable
+        base_path = os.path.dirname(sys.executable)  # Get the directory of the executable
+    else:
+        # When not frozen, the input directory is relative to the current script
+        base_path = os.path.abspath(".")  # Current working directory
+
+    return os.path.join(base_path, "input")
+
+def get_output_directory():
+    """Get the correct path for the output directory based on the running context."""
+    if is_frozen():
+        # When frozen, the output directory is relative to the executable
+        base_path = os.path.dirname(sys.executable)  # Get the directory of the executable
+    else:
+        # When not frozen, the output directory is relative to the current script
+        base_path = os.path.abspath(".")  # Current working directory
+
+    return os.path.join(base_path, "output")
+
 # Ensure the output directory exists
-OUTPUT_DIR = "output"
+OUTPUT_DIR = get_output_directory()
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 @click.command()
-@click.argument("input_dir", type=click.Path(exists=True), default="input")
+@click.argument("input_dir", type=click.Path(exists=True), default=get_input_directory())
 def main(input_dir):
     """Transcribes audio files (M4A or MP3) from the input directory."""
     console.print("Welcome to the Audio Transcription Tool!", style="bold blue")
-    console.print(f"Searching for audio files in '{input_dir}'...", style="bold green")
+    console.print("Searching for audio files in input directory...", style="bold green")
 
     input_files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f)) and (f.endswith(".mp3") or f.endswith(".m4a"))]
 
