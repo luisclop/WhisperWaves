@@ -1,17 +1,33 @@
 import os
+import sys
 import click
 from dotenv import load_dotenv
 from rich.prompt import Prompt
 from rich.console import Console
 
-# Load the .env file
-load_dotenv()
+console = Console()
+
+def is_frozen():
+    """Check if the script is frozen with pyinstaller"""
+    return getattr(sys, 'frozen', False)
+
+def resource_path(relative_path):
+    """Get the absolute path to a resource file"""
+    base_path = getattr(sys, '_MEIPASS', os.path.abspath("."))
+    return os.path.join(base_path, relative_path)
+
+if is_frozen():
+    # If the script is frozen with pyinstaller, load the .env file from the resources folder
+    dotenv_path = resource_path(".env.prod")
+    load_dotenv(dotenv_path=dotenv_path)
+else:
+    # Otherwise, load the .env file from the current directory
+    dotenv_path = '.env.dev'
+    load_dotenv(dotenv_path=dotenv_path)
 
 # Module imports
 from transcriber.whisper import transcribe_audio
 from utils.m4a_converter import m4a_to_mp3
-
-console = Console()
 
 # Ensure the output directory exists
 OUTPUT_DIR = "output"

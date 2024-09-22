@@ -5,6 +5,7 @@ env/
 
 # Archivos de entorno
 .env
+.env.*
 
 # Archivos de audio
 /output
