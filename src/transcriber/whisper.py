@@ -55,7 +55,7 @@ def transcribe_audio(input_path: str, output_path: str) -> None:
                     # Transcribe the audio part
                     transcription = client.audio.transcriptions.create(
                         model="whisper-1",
-                        file=temp_audio_file,
+                        file=temp_audio_file.file,
                     )
                     transcriptions.append(transcription.text)
 
