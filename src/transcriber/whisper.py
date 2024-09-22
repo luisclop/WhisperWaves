@@ -3,6 +3,7 @@ import tempfile
 from pydub import AudioSegment
 from openai import OpenAI
 from rich.console import Console
+from utils.transcription_cost import calculate_transcription_cost
 
 console = Console()
 
@@ -22,6 +23,7 @@ def transcribe_audio(input_path: str, output_path: str) -> None:
         # Load the audio file
         audio_file = AudioSegment.from_file(input_path)
         file_size = os.path.getsize(input_path)
+        transcription_cost = calculate_transcription_cost(len(audio_file))
 
         # Create the file name
         input_file_name = os.path.basename(input_path)
@@ -36,6 +38,7 @@ def transcribe_audio(input_path: str, output_path: str) -> None:
             with open(output_path, "w") as file:
                 file.write(transcription.text)
             console.print(f"Transcription saved to output/{output_file_name}", style="bold green")
+            console.print(f"Transcription cost: ${transcription_cost:.2f}", style="bold green")
         else:
             console.print(f"The given audio file {input_path} is too large. Splitting it into parts...", style="bold yellow")
 
@@ -68,6 +71,7 @@ def transcribe_audio(input_path: str, output_path: str) -> None:
             with open(output_path, "w") as file:
                 file.write(full_transcription)
             console.print(f"Transcription saved to output/{output_file_name}", style="bold green")
+            console.print(f"Transcription cost: ${transcription_cost:.2f}", style="bold green")
 
     except Exception as e:
         console.print(f"Error: {e}", style="bold red")
