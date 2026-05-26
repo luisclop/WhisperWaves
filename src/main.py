@@ -82,7 +82,7 @@ def main(input_dir):
             "No audio files found in the input directory.", style="bold red")
         return
 
-    # Lista para almacenar los archivos que se van a transcribir
+    converted_paths = set()
     files_to_transcribe = []
 
     for input_file in input_files:
@@ -90,11 +90,16 @@ def main(input_dir):
 
         if input_file.endswith(".m4a"):
             converted_path = m4a_to_mp3(input_path)
+            converted_paths.add(converted_path)
             files_to_transcribe.append(converted_path)
         elif input_file.endswith(".mp4"):
             converted_path = mp4_to_mp3(input_path)
+            converted_paths.add(converted_path)
             files_to_transcribe.append(converted_path)
-        else:
+
+    for input_file in input_files:
+        input_path = os.path.join(input_dir, input_file)
+        if input_file.endswith(".mp3") and input_path not in converted_paths:
             files_to_transcribe.append(input_path)
 
     # Transcribir todos los archivos (ya sean mp3 o convertidos)

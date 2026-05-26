@@ -1,5 +1,6 @@
+import io
+import math
 import os
-import tempfile
 from pydub import AudioSegment
 from openai import OpenAI
 from rich.console import Console
@@ -8,7 +9,8 @@ from utils.transcription_cost import calculate_transcription_cost
 console = Console()
 
 # API Parameters
-MAX_SIZE = 1024 * 1024 * 25
+MAX_SIZE = 1024 * 1024 * 25  # 25MB
+MAX_DURATION_MS = 1300 * 1000  # 1300s (API limit is 1400s, using margin)
 
 
 def get_client() -> OpenAI:
@@ -22,16 +24,15 @@ def transcribe_audio(input_path: str, output_path: str) -> None:
     client = get_client()
 
     try:
-        # Load the audio file
         audio_file = AudioSegment.from_file(input_path)
         file_size = os.path.getsize(input_path)
-        transcription_cost = calculate_transcription_cost(len(audio_file))
+        duration_ms = len(audio_file)
+        transcription_cost = calculate_transcription_cost(duration_ms)
 
-        # Create the file name
         input_file_name = os.path.basename(input_path)
         output_file_name = os.path.splitext(input_file_name)[0] + ".txt"
 
-        if file_size <= MAX_SIZE:
+        if file_size <= MAX_SIZE and duration_ms <= MAX_DURATION_MS:
             console.print(
                 f"Transcribing {input_file_name}...", style="bold green")
             with open(input_path, "rb") as audio:
@@ -48,32 +49,32 @@ def transcribe_audio(input_path: str, output_path: str) -> None:
             console.print(
                 f"The given audio file {input_path} is too large. Splitting it into parts...", style="bold yellow")
 
-            num_parts = (file_size // MAX_SIZE) + 1
-            part_duration = len(audio_file) / num_parts
+            num_parts = max(
+                math.ceil(file_size / MAX_SIZE),
+                math.ceil(duration_ms / MAX_DURATION_MS),
+            )
+            part_duration = duration_ms / num_parts
             transcriptions = []
 
             for i in range(num_parts):
                 console.print(
                     f"Transcribing part {i + 1}/{num_parts}...", style="bold green")
                 start = int(i * part_duration)
-                end = int(min((i + 1) * part_duration, len(audio_file)))
+                end = int(min((i + 1) * part_duration, duration_ms))
 
-                # Get the audio part
                 audio_part = audio_file[start:end]
 
-                # Use a temporary file
-                with tempfile.NamedTemporaryFile(suffix=".mp3", delete=True) as temp_audio_file:
-                    audio_part.export(temp_audio_file.name, format="mp3")
-                    temp_audio_file.seek(0)
+                buffer = io.BytesIO()
+                audio_part.export(buffer, format="mp3")
+                buffer.seek(0)
+                buffer.name = f"part_{i + 1}.mp3"
 
-                    # Transcribe the audio part
-                    transcription = client.audio.transcriptions.create(
-                        model="gpt-4o-transcribe",
-                        file=temp_audio_file.file,
-                    )
-                    transcriptions.append(transcription.text)
+                transcription = client.audio.transcriptions.create(
+                    model="gpt-4o-transcribe",
+                    file=buffer,
+                )
+                transcriptions.append(transcription.text)
 
-            # Save the combined transcription to the output directory
             full_transcription = "\n".join(transcriptions)
             with open(output_path, "w") as file:
                 file.write(full_transcription)
